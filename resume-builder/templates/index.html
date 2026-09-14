@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Online Resume Builder</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container header-row">
+    <div>
+      <h1>📄 Online Resume Builder</h1>
+      <p>Fill in your details and download a professional resume as a PDF.</p>
+    </div>
+    <div class="header-user">
+      <span>Hi, {{ current_user.username }}</span>
+      <a href="{{ url_for('logout') }}" class="btn-secondary">Log Out</a>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      <div class="flash">
+        {% for message in messages %}<p>{{ message }}</p>{% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <form id="resume-form" action="{{ url_for('generate') }}" method="POST" target="_blank">
+
+    <section class="card">
+      <h2>Personal Details</h2>
+      <div class="grid-2">
+        <div class="field">
+          <label>Full Name *</label>
+          <input type="text" name="full_name" required placeholder="Jane Doe">
+        </div>
+        <div class="field">
+          <label>Email</label>
+          <input type="email" name="email" placeholder="jane.doe@email.com">
+        </div>
+        <div class="field">
+          <label>Phone</label>
+          <input type="text" name="phone" placeholder="+91 98765 43210">
+        </div>
+        <div class="field">
+          <label>Address / Location</label>
+          <input type="text" name="address" placeholder="Chennai, India">
+        </div>
+        <div class="field">
+          <label>LinkedIn</label>
+          <input type="text" name="linkedin" placeholder="linkedin.com/in/janedoe">
+        </div>
+        <div class="field">
+          <label>GitHub</label>
+          <input type="text" name="github" placeholder="github.com/janedoe">
+        </div>
+        <div class="field">
+          <label>Portfolio Website</label>
+          <input type="text" name="portfolio" placeholder="janedoe.dev">
+        </div>
+      </div>
+      <div class="field">
+        <label>Professional Summary</label>
+        <textarea name="summary" rows="3" placeholder="A short 2-3 sentence pitch about yourself..."></textarea>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Education</h2>
+      <div id="education-list"></div>
+      <button type="button" class="btn-secondary" onclick="addEducation()">+ Add Education</button>
+    </section>
+
+    <section class="card">
+      <h2>Work Experience</h2>
+      <div id="experience-list"></div>
+      <button type="button" class="btn-secondary" onclick="addExperience()">+ Add Experience</button>
+    </section>
+
+    <section class="card">
+      <h2>Projects</h2>
+      <div id="projects-list"></div>
+      <button type="button" class="btn-secondary" onclick="addProject()">+ Add Project</button>
+    </section>
+
+    <section class="card">
+      <h2>Skills</h2>
+      <div class="field">
+        <label>Skills (comma separated)</label>
+        <input type="text" name="skills" placeholder="Python, Flask, SQL, Communication">
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Certifications</h2>
+      <div class="field">
+        <label>One certification per line</label>
+        <textarea name="certifications" rows="3" placeholder="AWS Certified Cloud Practitioner - 2025"></textarea>
+      </div>
+    </section>
+
+    <div class="actions">
+      <button type="submit" formaction="{{ url_for('preview') }}" class="btn-secondary">Preview</button>
+      <button type="submit" class="btn-primary">⬇ Generate & Download PDF</button>
+    </div>
+
+  </form>
+</main>
+
+<footer class="site-footer">
+  <p>Built with Flask • Deployed on Heroku</p>
+</footer>
+
+<script>
+let eduCount = 0, expCount = 0, projCount = 0;
+
+function addEducation() {
+  eduCount++;
+  const div = document.createElement('div');
+  div.className = 'repeat-group';
+  div.innerHTML = `
+    <div class="grid-2">
+      <input type="text" name="education_degree[]" placeholder="Degree (e.g. B.Tech Computer Science)">
+      <input type="text" name="education_school[]" placeholder="Institution">
+      <input type="text" name="education_year[]" placeholder="Year (e.g. 2022 - 2026)">
+      <input type="text" name="education_details[]" placeholder="GPA / Honors (optional)">
+    </div>
+    <button type="button" class="btn-remove" onclick="this.parentElement.remove()">Remove</button>`;
+  document.getElementById('education-list').appendChild(div);
+}
+
+function addExperience() {
+  expCount++;
+  const div = document.createElement('div');
+  div.className = 'repeat-group';
+  div.innerHTML = `
+    <div class="grid-2">
+      <input type="text" name="experience_role[]" placeholder="Job Title / Internship Role">
+      <input type="text" name="experience_company[]" placeholder="Company">
+      <input type="text" name="experience_duration[]" placeholder="Duration (e.g. Jun 2025 - Aug 2025)">
+    </div>
+    <textarea name="experience_details[]" rows="2" placeholder="Key responsibilities / achievements"></textarea>
+    <button type="button" class="btn-remove" onclick="this.parentElement.remove()">Remove</button>`;
+  document.getElementById('experience-list').appendChild(div);
+}
+
+function addProject() {
+  projCount++;
+  const div = document.createElement('div');
+  div.className = 'repeat-group';
+  div.innerHTML = `
+    <div class="grid-2">
+      <input type="text" name="projects_title[]" placeholder="Project Title">
+      <input type="text" name="projects_link[]" placeholder="Link (optional)">
+    </div>
+    <textarea name="projects_description[]" rows="2" placeholder="Short description of the project"></textarea>
+    <button type="button" class="btn-remove" onclick="this.parentElement.remove()">Remove</button>`;
+  document.getElementById('projects-list').appendChild(div);
+}
+
+// Start with one blank row of each
+addEducation();
+addExperience();
+addProject();
+</script>
+
+</body>
+</html>

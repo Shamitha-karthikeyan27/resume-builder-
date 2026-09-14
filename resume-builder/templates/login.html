@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Log In — Online Resume Builder</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container">
+    <h1>📄 Online Resume Builder</h1>
+    <p>Log in to build and download your resume.</p>
+  </div>
+</header>
+
+<main class="container auth-container">
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      <div class="flash">
+        {% for message in messages %}<p>{{ message }}</p>{% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <section class="card auth-card">
+    <h2>Log In</h2>
+    <form method="POST" action="{{ url_for('login') }}">
+      <div class="field">
+        <label>Username</label>
+        <input type="text" name="username" required autofocus>
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" name="password" required>
+      </div>
+      <button type="submit" class="btn-primary auth-submit">Log In</button>
+    </form>
+    <p class="auth-switch">Don't have an account? <a href="{{ url_for('signup') }}">Sign up</a></p>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <p>Built with Flask • Deployed on Render</p>
+</footer>
+
+</body>
+</html>
