@@ -9,18 +9,18 @@
 html, body { margin: 0; padding: 0; }
 body { font-family: Helvetica, Arial, sans-serif; background: #eef2f7; color: #243447; font-size: 9.2pt; line-height: 1.42; }
 .resume-page { width: 210mm; min-height: 297mm; margin: 18px auto; padding: 15mm 15mm 14mm; background: #ffffff; }
-.preview-banner { width: 100%; max-width: 900px; margin: 0 auto 14px; padding: 9px 12px; background: #fff7dc; color: #765900; border: 1px solid #f0d57a; font: 9pt Helvetica, Arial, sans-serif; }
+.preview-banner { width: 100%; max-width: 900px; margin: 0 auto 14px; padding: 9px 12px; background: #fff7dc; color: #765900; border: 1px solid #f0d57a; border-radius: 6px; font: 9pt Helvetica, Arial, sans-serif; }
 .preview-banner a { color: #174f91; text-decoration: none; font-weight: bold; float: right; }
 .clearfix:after { content: ""; display: table; clear: both; }
 .header-table { width: 100%; border-collapse: collapse; }
 .header-left { vertical-align: top; width: 70%; }
 .header-right { vertical-align: top; width: 30%; text-align: right; }
-.name { margin: 0; font-size: 26pt; line-height: 1.05; color: #1d4f88; font-weight: bold; }
+.name { margin: 0; font-size: 26pt; line-height: 1.05; letter-spacing: .3px; color: #1d4f88; font-weight: bold; }
 .headline { margin: 5px 0 0; color: #65758a; font-size: 9pt; }
 .contact { margin-top: 7px; color: #586b82; font-size: 8.2pt; line-height: 1.55; }
 .contact span { display: inline; }
 .header-rule { height: 2px; background: #2f73d9; margin: 12px 0 14px; }
-.section { margin: 13px 0 7px; padding: 0 0 4px; color: #1d4f88; border-bottom: 1px solid #d8e1ec; font-size: 10.2pt; font-weight: bold; text-transform: uppercase; }
+.section { margin: 13px 0 7px; padding: 0 0 4px; color: #1d4f88; border-bottom: 1px solid #d8e1ec; font-size: 10.2pt; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
 .summary { margin: 0; color: #3f5065; font-size: 9.2pt; }
 .entry { margin: 0 0 9px; page-break-inside: avoid; }
 .entry-table { width: 100%; border-collapse: collapse; }
@@ -31,7 +31,7 @@ body { font-family: Helvetica, Arial, sans-serif; background: #eef2f7; color: #2
 .details { color: #425267; font-size: 8.8pt; margin-top: 3px; }
 .detail-line { margin: 1px 0; }
 .skills { margin: 0; color: #425267; font-size: 8.9pt; }
-.skill-pill { display: inline-block; border: 1px solid #cfdbe9; background: #f5f8fc; padding: 3px 6px; margin: 0 4px 4px 0; color: #35516f; }
+.skill-pill { display: inline-block; border: 1px solid #cfdbe9; background: #f5f8fc; padding: 3px 6px; margin: 0 4px 4px 0; border-radius: 3px; color: #35516f; }
 .cert-list { margin: 2px 0 0 14px; padding: 0; color: #425267; font-size: 8.8pt; }
 .cert-list li { margin-bottom: 3px; }
 .footer-note { margin-top: 14px; padding-top: 6px; border-top: 1px solid #e2e7ee; color: #8a96a5; font-size: 7.4pt; text-align: center; }
@@ -49,7 +49,7 @@ body { font-family: Helvetica, Arial, sans-serif; background: #eef2f7; color: #2
 .minimal .resume-page { padding-top: 18mm; }
 .minimal .name { color: #222; font-weight: normal; font-size: 28pt; }
 .minimal .header-rule { height: 1px; background: #c9d0d8; }
-.minimal .section { color: #333; border-bottom: 1px solid #e2e5e8; font-weight: normal; }
+.minimal .section { color: #333; border-bottom: 1px solid #e2e5e8; font-weight: normal; letter-spacing: .8px; }
 .minimal .entry-title { color: #333; }
 .minimal .skill-pill { background: #fff; border-color: #d8d8d8; }
 
@@ -59,7 +59,7 @@ body { font-family: Helvetica, Arial, sans-serif; background: #eef2f7; color: #2
 .executive .side { width: 29%; vertical-align: top; background: #203d5d; color: #fff; padding: 18mm 9mm; }
 .executive .main { width: 71%; vertical-align: top; padding: 15mm 13mm 14mm; }
 .executive .side-name { font-size: 19pt; line-height: 1.15; font-weight: bold; word-wrap: break-word; }
-.executive .side-label { margin-top: 14px; color: #bcd3ec; text-transform: uppercase; font-size: 7.5pt; }
+.executive .side-label { margin-top: 14px; color: #bcd3ec; text-transform: uppercase; font-size: 7.5pt; letter-spacing: .9px; }
 .executive .side-text { margin-top: 3px; color: #f4f8fc; font-size: 8.1pt; line-height: 1.45; word-wrap: break-word; }
 .executive .main .name { color: #203d5d; font-size: 25pt; }
 .executive .main .contact { color: #5f7185; }
@@ -72,9 +72,13 @@ body { font-family: Helvetica, Arial, sans-serif; background: #eef2f7; color: #2
 .creative .name { color: #365f9c; font-size: 27pt; }
 .creative .header-rule { height: 4px; background: #365f9c; }
 .creative .section { color: #365f9c; border-bottom: 2px solid #d1ddec; }
+.creative .section:before { content: "◆  "; font-size: 7pt; }
 .creative .entry-title { color: #315783; }
 .creative .skill-pill { background: #eef4fc; border-color: #c8d8ed; color: #315783; }
 
+@media screen {
+  .resume-page { box-shadow: 0 8px 28px rgba(27, 48, 75, .12); }
+}
 </style>
 </head>
 <body class="{{ data.template or 'modern' }}">
