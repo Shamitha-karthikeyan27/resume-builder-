@@ -108,13 +108,41 @@ def logout():
 
 
 # ------------------------------------------------------------ PDF generation
+def make_pdf_safe(value):
+    """Replace punctuation that can break built-in ReportLab fonts."""
+    if not isinstance(value, str):
+        return value
+    replacements = {
+        "\u2013": "-", "\u2014": "-", "\u2212": "-",
+        "\u2018": "'", "\u2019": "'", "\u201c": '"', "\u201d": '"',
+        "\u2022": "-", "\u00a0": " ", "\u2192": "->", "\u2190": "<-",
+        "\u2026": "...", "\u2605": "*", "\u25c6": "*",
+    }
+    for old, new in replacements.items():
+        value = value.replace(old, new)
+    return value
+
+
+def sanitize_for_pdf(value):
+    if isinstance(value, dict):
+        return {key: sanitize_for_pdf(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [sanitize_for_pdf(item) for item in value]
+    return make_pdf_safe(value)
+
+
 def render_pdf(html_content):
     pdf_buffer = io.BytesIO()
-    pisa_status = pisa.CreatePDF(src=html_content, dest=pdf_buffer)
-    if pisa_status.err:
+    try:
+        pisa_status = pisa.CreatePDF(src=html_content, dest=pdf_buffer, encoding="UTF-8")
+        if pisa_status.err:
+            app.logger.error("xhtml2pdf reported PDF generation errors: %s", getattr(pisa_status, "log", "unknown error"))
+            return None
+        pdf_buffer.seek(0)
+        return pdf_buffer
+    except Exception:
+        app.logger.exception("PDF generation crashed")
         return None
-    pdf_buffer.seek(0)
-    return pdf_buffer
 
 
 def get_list_field(prefix, keys):
@@ -298,7 +326,8 @@ def generate():
     if not data["full_name"].strip():
         flash("Full name is required to generate a resume.")
         return redirect(url_for("index"))
-    html_content = render_template("resume_pdf.html", data=data, preview=False)
+    pdf_data = sanitize_for_pdf(data)
+    html_content = render_template("resume_pdf.html", data=pdf_data, preview=False)
     pdf_buffer = render_pdf(html_content)
     if pdf_buffer is None:
         flash("Something went wrong while generating your PDF. Please try again.")
