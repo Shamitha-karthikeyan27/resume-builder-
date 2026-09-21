@@ -132,12 +132,29 @@ def sanitize_for_pdf(value):
 
 
 def render_pdf(html_content):
+    """Render HTML to a PDF buffer and only fail when no PDF was produced."""
     pdf_buffer = io.BytesIO()
     try:
         pisa_status = pisa.CreatePDF(src=html_content, dest=pdf_buffer, encoding="UTF-8")
-        if pisa_status.err:
-            app.logger.error("xhtml2pdf reported PDF generation errors: %s", getattr(pisa_status, "log", "unknown error"))
+        pdf_bytes = pdf_buffer.getvalue()
+
+        # xhtml2pdf can report non-fatal CSS warnings in ``err`` even when it
+        # successfully produced a usable PDF. Do not throw away a valid PDF
+        # just because the renderer reported warnings.
+        if not pdf_bytes:
+            app.logger.error(
+                "xhtml2pdf produced an empty PDF. status=%s log=%s",
+                getattr(pisa_status, "err", "unknown"),
+                getattr(pisa_status, "log", "unknown"),
+            )
             return None
+
+        if getattr(pisa_status, "err", 0):
+            app.logger.warning(
+                "xhtml2pdf completed with warnings/errors, but a PDF was produced: %s",
+                getattr(pisa_status, "log", "unknown"),
+            )
+
         pdf_buffer.seek(0)
         return pdf_buffer
     except Exception:
@@ -330,10 +347,26 @@ def generate():
     html_content = render_template("resume_pdf.html", data=pdf_data, preview=False)
     pdf_buffer = render_pdf(html_content)
     if pdf_buffer is None:
-        flash("Something went wrong while generating your PDF. Please try again.")
-        return redirect(url_for("index"))
-    filename = f"{data['full_name'].strip().replace(' ', '_')}_Resume.pdf"
-    return send_file(pdf_buffer, mimetype="application/pdf", as_attachment=True, download_name=filename)
+        # Return an actual error response instead of redirecting to the editor.
+        # The frontend can show the message without making it look like the
+        # download silently navigated away from the page.
+        return (
+            "PDF generation failed on the server. Please try again. Check the Render logs for the exact renderer error.",
+            500,
+            {"Content-Type": "text/plain; charset=utf-8"},
+        )
+    safe_name = re.sub(r"[^A-Za-z0-9._-]+", "_", data["full_name"].strip()).strip("._") or "Resume"
+    filename = f"{safe_name}_Resume.pdf"
+    response = send_file(
+        pdf_buffer,
+        mimetype="application/pdf",
+        as_attachment=True,
+        download_name=filename,
+        max_age=0,
+    )
+    response.headers["Cache-Control"] = "no-store"
+    response.headers["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return response
 
 
 @app.errorhandler(404)

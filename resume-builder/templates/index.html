@@ -64,22 +64,22 @@
     </div>
   </section>
 
-  <form id="resume-form" action="{{ url_for('generate') }}" method="POST" target="_blank">
+  <form id="resume-form" action="{{ url_for('generate') }}" method="POST">
     <input type="hidden" name="template" id="template-input" value="modern">
 
     <section class="card template-section">
       <div class="section-title-line">
         <div><span class="eyebrow">DESIGN STUDIO</span><h2>Choose your resume template</h2><p>Pick a style first. Your same information will be placed into the selected design.</p></div>
-        <span class="featured-pill">★ Featured templates</span>
+        <span class="featured-pill">★ Top 5 featured templates</span>
       </div>
       <div class="template-grid">
         <button type="button" class="template-card active" data-template="modern" onclick="selectTemplate('modern', this)">
           <div class="template-preview modern-preview"><div class="mini-top"></div><div class="mini-line wide"></div><div class="mini-line"></div><div class="mini-block"></div><div class="mini-block short"></div></div>
-          <div class="template-meta"><strong>Modern</strong><span>Clean & professional</span></div><span class="selected-mark">✓</span>
+          <div class="template-meta"><strong>Modern <em class="template-badge">Recommended</em></strong><span>Clean & professional</span></div><span class="selected-mark">✓</span>
         </button>
         <button type="button" class="template-card" data-template="ats" onclick="selectTemplate('ats', this)">
           <div class="template-preview ats-preview"><div class="mini-center"></div><div class="mini-line wide"></div><div class="mini-line"></div><div class="mini-block"></div><div class="mini-block short"></div></div>
-          <div class="template-meta"><strong>ATS Classic</strong><span>Simple & scanner-friendly</span></div><span class="selected-mark">✓</span>
+          <div class="template-meta"><strong>ATS Classic <em class="template-badge">ATS</em></strong><span>Simple & scanner-friendly</span></div><span class="selected-mark">✓</span>
         </button>
         <button type="button" class="template-card" data-template="minimal" onclick="selectTemplate('minimal', this)">
           <div class="template-preview minimal-preview"><div class="mini-line wide"></div><div class="mini-line"></div><div class="mini-block"></div><div class="mini-block short"></div></div>
@@ -225,6 +225,56 @@ function updateMetrics() {
 
 ['input','textarea'].forEach(tag => document.querySelectorAll(tag).forEach(el => el.addEventListener('input', updateMetrics)));
 document.getElementById('resume_pdf').addEventListener('change', function() { document.getElementById('file-name').textContent = this.files[0] ? this.files[0].name : 'Choose PDF'; });
+
+// Download the PDF as a Blob so the user stays on the editor page. This avoids
+// opening the generated document as a new webpage and gives a visible error
+// if the server cannot create the PDF.
+document.getElementById('resume-form').addEventListener('submit', async function(event) {
+  const submitter = event.submitter;
+  if (!submitter || !submitter.classList.contains('btn-primary')) return;
+
+  event.preventDefault();
+  const button = submitter;
+  const originalText = button.innerHTML;
+  button.disabled = true;
+  button.innerHTML = '⏳ Generating PDF...';
+
+  try {
+    const response = await fetch(this.action, {
+      method: 'POST',
+      body: new FormData(this),
+      credentials: 'same-origin',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    });
+
+    if (!response.ok) {
+      const message = await response.text();
+      throw new Error(message || 'The server could not generate the PDF.');
+    }
+
+    const blob = await response.blob();
+    if (!blob.size) throw new Error('The server returned an empty PDF.');
+
+    let filename = 'Resume.pdf';
+    const disposition = response.headers.get('Content-Disposition') || '';
+    const match = disposition.match(/filename="?([^";]+)"?/i);
+    if (match && match[1]) filename = match[1];
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  } catch (error) {
+    alert('PDF download failed.\n\n' + (error.message || 'Please try again.'));
+  } finally {
+    button.disabled = false;
+    button.innerHTML = originalText;
+  }
+});
 
 if (imported) {
   const simple = ['full_name','email','phone','address','linkedin','github','portfolio','summary'];
