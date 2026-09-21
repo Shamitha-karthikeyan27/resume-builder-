@@ -150,10 +150,11 @@ def render_pdf(html_content):
             return None
 
         if getattr(pisa_status, "err", 0):
-            app.logger.warning(
-                "xhtml2pdf completed with warnings/errors, but a PDF was produced: %s",
+            app.logger.error(
+                "xhtml2pdf reported renderer errors: %s",
                 getattr(pisa_status, "log", "unknown"),
             )
+            return None
 
         pdf_buffer.seek(0)
         return pdf_buffer
@@ -332,8 +333,23 @@ def index():
 @app.route("/preview", methods=["POST"])
 @login_required
 def preview():
+    # Preview uses the exact same xhtml2pdf renderer as Download so the user
+    # sees the same layout that will be downloaded.
     data = collect_form_data(request.form)
-    return render_template("resume_pdf.html", data=data, preview=True)
+    if not data["full_name"].strip():
+        flash("Full name is required to preview a resume.")
+        return redirect(url_for("index"))
+    pdf_data = sanitize_for_pdf(data)
+    html_content = render_template("resume_pdf.html", data=pdf_data, preview=False)
+    pdf_buffer = render_pdf(html_content)
+    if pdf_buffer is None:
+        return ("PDF preview could not be generated. Check the Render logs for the exact renderer error.", 500)
+    safe_name = re.sub(r"[^A-Za-z0-9._-]+", "_", data["full_name"].strip()).strip("._") or "Resume"
+    response = send_file(pdf_buffer, mimetype="application/pdf", as_attachment=False,
+                         download_name=f"{safe_name}_Preview.pdf", max_age=0)
+    response.headers["Content-Disposition"] = "inline"
+    response.headers["Cache-Control"] = "no-store"
+    return response
 
 
 @app.route("/generate", methods=["POST"])
