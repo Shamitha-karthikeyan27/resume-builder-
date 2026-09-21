@@ -3,3 +3,4 @@ gunicorn==22.0.0
 xhtml2pdf==0.2.16
 Flask-SQLAlchemy==3.1.1
 Flask-Login==0.6.3
+pypdf==5.9.0

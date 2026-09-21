@@ -7,168 +7,241 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-
 <header class="site-header">
   <div class="container header-row">
-    <div>
-      <h1>📄 Online Resume Builder</h1>
-      <p>Fill in your details and download a professional resume as a PDF.</p>
+    <div class="brand-wrap">
+      <div class="brand-icon">▤</div>
+      <div>
+        <h1>Online Resume Builder</h1>
+        <p>Import an old resume, choose a design, edit your details and download a polished PDF.</p>
+      </div>
     </div>
     <div class="header-user">
       <span>Hi, {{ current_user.username }}</span>
-      <a href="{{ url_for('logout') }}" class="btn-secondary">Log Out</a>
+      <a href="{{ url_for('logout') }}" class="btn-header">Log Out</a>
     </div>
   </div>
 </header>
 
-<main class="container">
-
+<main class="container dashboard">
   {% with messages = get_flashed_messages() %}
-    {% if messages %}
-      <div class="flash">
-        {% for message in messages %}<p>{{ message }}</p>{% endfor %}
-      </div>
-    {% endif %}
+    {% if messages %}<div class="flash">{% for message in messages %}<p>{{ message }}</p>{% endfor %}</div>{% endif %}
   {% endwith %}
 
+  <section class="hero-grid">
+    <div class="card import-card">
+      <div class="section-heading-row">
+        <div>
+          <span class="eyebrow">SMART IMPORT</span>
+          <h2>Start from your old resume</h2>
+          <p>Upload a text-based PDF and the builder will extract your contact details, summary, education, experience, projects, skills and certifications.</p>
+        </div>
+        <div class="upload-badge">PDF<br><small>Auto Fill</small></div>
+      </div>
+      <form action="{{ url_for('extract_resume') }}" method="POST" enctype="multipart/form-data" class="upload-form">
+        <label class="drop-zone" for="resume_pdf">
+          <span class="upload-icon">↑</span>
+          <strong>Upload your existing resume</strong>
+          <small>PDF only • up to 8 MB</small>
+          <span id="file-name">Choose PDF</span>
+        </label>
+        <input id="resume_pdf" type="file" name="resume_pdf" accept="application/pdf,.pdf" hidden required>
+        <button type="submit" class="btn-primary">✨ Extract & Auto-Fill</button>
+      </form>
+    </div>
+
+    <div class="metrics-panel">
+      <div class="card completion-card">
+        <div class="completion-ring" id="completion-ring"><span id="completion-value">0%</span></div>
+        <div><span class="eyebrow">PROFILE COMPLETION</span><h3 id="completion-text">Let's build your resume</h3><p>Complete more sections to make your resume more informative.</p></div>
+      </div>
+      <div class="quick-metrics">
+        <div class="metric-card"><span class="metric-icon blue">●</span><div><small>Fields Filled</small><strong id="fields-filled">0/8</strong></div></div>
+        <div class="metric-card"><span class="metric-icon purple">◆</span><div><small>Sections</small><strong id="sections-count">0/6</strong></div></div>
+        <div class="metric-card"><span class="metric-icon green">★</span><div><small>Projects</small><strong id="project-count">0</strong></div></div>
+        <div class="metric-card"><span class="metric-icon orange">◷</span><div><small>Read Time</small><strong id="read-time">1 min</strong></div></div>
+      </div>
+    </div>
+  </section>
+
   <form id="resume-form" action="{{ url_for('generate') }}" method="POST" target="_blank">
+    <input type="hidden" name="template" id="template-input" value="modern">
+
+    <section class="card template-section">
+      <div class="section-title-line">
+        <div><span class="eyebrow">DESIGN STUDIO</span><h2>Choose your resume template</h2><p>Pick a style first. Your same information will be placed into the selected design.</p></div>
+        <span class="featured-pill">★ Featured templates</span>
+      </div>
+      <div class="template-grid">
+        <button type="button" class="template-card active" data-template="modern" onclick="selectTemplate('modern', this)">
+          <div class="template-preview modern-preview"><div class="mini-top"></div><div class="mini-line wide"></div><div class="mini-line"></div><div class="mini-block"></div><div class="mini-block short"></div></div>
+          <div class="template-meta"><strong>Modern</strong><span>Clean & professional</span></div><span class="selected-mark">✓</span>
+        </button>
+        <button type="button" class="template-card" data-template="ats" onclick="selectTemplate('ats', this)">
+          <div class="template-preview ats-preview"><div class="mini-center"></div><div class="mini-line wide"></div><div class="mini-line"></div><div class="mini-block"></div><div class="mini-block short"></div></div>
+          <div class="template-meta"><strong>ATS Classic</strong><span>Simple & scanner-friendly</span></div><span class="selected-mark">✓</span>
+        </button>
+        <button type="button" class="template-card" data-template="minimal" onclick="selectTemplate('minimal', this)">
+          <div class="template-preview minimal-preview"><div class="mini-line wide"></div><div class="mini-line"></div><div class="mini-block"></div><div class="mini-block short"></div></div>
+          <div class="template-meta"><strong>Minimal</strong><span>Elegant & spacious</span></div><span class="selected-mark">✓</span>
+        </button>
+        <button type="button" class="template-card" data-template="executive" onclick="selectTemplate('executive', this)">
+          <div class="template-preview executive-preview"><div class="mini-side"></div><div class="mini-content"><div class="mini-line wide"></div><div class="mini-line"></div><div class="mini-block"></div></div></div>
+          <div class="template-meta"><strong>Executive</strong><span>Structured & bold</span></div><span class="selected-mark">✓</span>
+        </button>
+        <button type="button" class="template-card" data-template="creative" onclick="selectTemplate('creative', this)">
+          <div class="template-preview creative-preview"><div class="mini-circle"></div><div class="mini-line wide"></div><div class="mini-line"></div><div class="mini-block"></div></div>
+          <div class="template-meta"><strong>Creative</strong><span>Modern portfolio style</span></div><span class="selected-mark">✓</span>
+        </button>
+      </div>
+      <div class="template-note"><strong>Current selection:</strong> <span id="selected-template-label">Modern</span> <span id="selected-template-tip">— balanced for most roles.</span></div>
+    </section>
 
     <section class="card">
-      <h2>Personal Details</h2>
+      <div class="section-title-line"><div><span class="eyebrow">STEP 1</span><h2>Personal Details</h2></div><span class="section-status" id="personal-status">0/8 complete</span></div>
       <div class="grid-2">
-        <div class="field">
-          <label>Full Name *</label>
-          <input type="text" name="full_name" required placeholder="Jane Doe">
-        </div>
-        <div class="field">
-          <label>Email</label>
-          <input type="email" name="email" placeholder="jane.doe@email.com">
-        </div>
-        <div class="field">
-          <label>Phone</label>
-          <input type="text" name="phone" placeholder="+91 98765 43210">
-        </div>
-        <div class="field">
-          <label>Address / Location</label>
-          <input type="text" name="address" placeholder="Chennai, India">
-        </div>
-        <div class="field">
-          <label>LinkedIn</label>
-          <input type="text" name="linkedin" placeholder="linkedin.com/in/janedoe">
-        </div>
-        <div class="field">
-          <label>GitHub</label>
-          <input type="text" name="github" placeholder="github.com/janedoe">
-        </div>
-        <div class="field">
-          <label>Portfolio Website</label>
-          <input type="text" name="portfolio" placeholder="janedoe.dev">
-        </div>
+        <div class="field"><label>Full Name *</label><input type="text" name="full_name" required placeholder="Jane Doe"></div>
+        <div class="field"><label>Email</label><input type="email" name="email" placeholder="jane.doe@email.com"></div>
+        <div class="field"><label>Phone</label><input type="text" name="phone" placeholder="+91 98765 43210"></div>
+        <div class="field"><label>Address / Location</label><input type="text" name="address" placeholder="Chennai, India"></div>
+        <div class="field"><label>LinkedIn</label><input type="text" name="linkedin" placeholder="linkedin.com/in/janedoe"></div>
+        <div class="field"><label>GitHub</label><input type="text" name="github" placeholder="github.com/janedoe"></div>
+        <div class="field"><label>Portfolio Website</label><input type="text" name="portfolio" placeholder="janedoe.dev"></div>
       </div>
-      <div class="field">
-        <label>Professional Summary</label>
-        <textarea name="summary" rows="3" placeholder="A short 2-3 sentence pitch about yourself..."></textarea>
-      </div>
+      <div class="field"><label>Professional Summary</label><textarea name="summary" rows="3" placeholder="A short 2–3 sentence pitch about yourself..."></textarea></div>
     </section>
 
-    <section class="card">
-      <h2>Education</h2>
-      <div id="education-list"></div>
-      <button type="button" class="btn-secondary" onclick="addEducation()">+ Add Education</button>
+    <section class="card"><div class="section-title-line"><div><span class="eyebrow">STEP 2</span><h2>Education</h2></div><span class="section-status" id="education-status">0 entries</span></div><div id="education-list"></div><button type="button" class="btn-secondary" onclick="addEducation()">+ Add Education</button></section>
+    <section class="card"><div class="section-title-line"><div><span class="eyebrow">STEP 3</span><h2>Work Experience</h2></div><span class="section-status" id="experience-status">0 entries</span></div><div id="experience-list"></div><button type="button" class="btn-secondary" onclick="addExperience()">+ Add Experience</button></section>
+    <section class="card"><div class="section-title-line"><div><span class="eyebrow">STEP 4</span><h2>Projects</h2></div><span class="section-status" id="projects-status">0 entries</span></div><div id="projects-list"></div><button type="button" class="btn-secondary" onclick="addProject()">+ Add Project</button></section>
+
+    <section class="two-col-cards">
+      <div class="card"><div class="section-title-line"><div><span class="eyebrow">STEP 5</span><h2>Key Skills</h2></div></div><div class="field"><label>Skills (comma separated)</label><input type="text" name="skills" placeholder="Python, Flask, SQL, Communication"></div><div class="skill-meter"><div><span>Skills coverage</span><b id="skill-percent">0%</b></div><div class="meter-track"><span id="skill-meter-fill"></span></div></div></div>
+      <div class="card"><div class="section-title-line"><div><span class="eyebrow">STEP 6</span><h2>Certifications</h2></div></div><div class="field"><label>One certification per line</label><textarea name="certifications" rows="4" placeholder="AWS Certified Cloud Practitioner - 2025"></textarea></div></div>
     </section>
 
-    <section class="card">
-      <h2>Work Experience</h2>
-      <div id="experience-list"></div>
-      <button type="button" class="btn-secondary" onclick="addExperience()">+ Add Experience</button>
-    </section>
-
-    <section class="card">
-      <h2>Projects</h2>
-      <div id="projects-list"></div>
-      <button type="button" class="btn-secondary" onclick="addProject()">+ Add Project</button>
-    </section>
-
-    <section class="card">
-      <h2>Skills</h2>
-      <div class="field">
-        <label>Skills (comma separated)</label>
-        <input type="text" name="skills" placeholder="Python, Flask, SQL, Communication">
-      </div>
-    </section>
-
-    <section class="card">
-      <h2>Certifications</h2>
-      <div class="field">
-        <label>One certification per line</label>
-        <textarea name="certifications" rows="3" placeholder="AWS Certified Cloud Practitioner - 2025"></textarea>
+    <section class="card analytics-card">
+      <div class="section-title-line"><div><span class="eyebrow">RESUME INSIGHTS</span><h2>Live resume analytics</h2><p>These visual indicators update as you fill the form.</p></div></div>
+      <div class="analytics-grid">
+        <div class="insight"><div class="insight-head"><span>Profile completeness</span><strong id="insight-completion">0%</strong></div><div class="bar-track"><span id="insight-bar"></span></div></div>
+        <div class="insight"><div class="insight-head"><span>Content sections</span><strong id="insight-sections">0 / 6</strong></div><div class="bar-track"><span id="section-bar"></span></div></div>
+        <div class="insight donut-insight"><div class="donut" id="content-donut"><span id="donut-value">0%</span></div><div><strong>Resume strength</strong><p id="strength-text">Add your details to see a live estimate.</p></div></div>
       </div>
     </section>
 
     <div class="actions">
-      <button type="submit" formaction="{{ url_for('preview') }}" class="btn-secondary">Preview</button>
+      <button type="submit" formaction="{{ url_for('preview') }}" class="btn-secondary">Preview Resume</button>
       <button type="submit" class="btn-primary">⬇ Generate & Download PDF</button>
     </div>
-
   </form>
 </main>
 
-<footer class="site-footer">
-  <p>Built with Flask • Deployed on Heroku</p>
-</footer>
+<footer class="site-footer"><p>Built with Flask • Smart PDF import • 5 resume templates • PDF export</p></footer>
 
 <script>
+const imported = {{ imported|tojson if imported else 'null' }};
+const templateInfo = {
+  modern: ['Modern', 'balanced for most roles.'],
+  ats: ['ATS Classic', 'simple structure for easy scanning.'],
+  minimal: ['Minimal', 'clean and spacious.'],
+  executive: ['Executive', 'structured and formal.'],
+  creative: ['Creative', 'modern portfolio style.']
+};
 let eduCount = 0, expCount = 0, projCount = 0;
 
-function addEducation() {
+function selectTemplate(name, button) {
+  document.getElementById('template-input').value = name;
+  document.querySelectorAll('.template-card').forEach(c => c.classList.remove('active'));
+  button.classList.add('active');
+  document.getElementById('selected-template-label').textContent = templateInfo[name][0];
+  document.getElementById('selected-template-tip').textContent = '— ' + templateInfo[name][1];
+}
+
+function addEducation(data = {}) {
   eduCount++;
-  const div = document.createElement('div');
-  div.className = 'repeat-group';
-  div.innerHTML = `
-    <div class="grid-2">
-      <input type="text" name="education_degree[]" placeholder="Degree (e.g. B.Tech Computer Science)">
-      <input type="text" name="education_school[]" placeholder="Institution">
-      <input type="text" name="education_year[]" placeholder="Year (e.g. 2022 - 2026)">
-      <input type="text" name="education_details[]" placeholder="GPA / Honors (optional)">
-    </div>
-    <button type="button" class="btn-remove" onclick="this.parentElement.remove()">Remove</button>`;
-  document.getElementById('education-list').appendChild(div);
+  const div = document.createElement('div'); div.className = 'repeat-group'; div.dataset.kind = 'education';
+  div.innerHTML = `<div class="repeat-number">Education ${eduCount}</div><div class="grid-2">
+    <input type="text" name="education_degree[]" placeholder="Degree (e.g. B.Tech Computer Science)" value="${esc(data.degree)}">
+    <input type="text" name="education_school[]" placeholder="Institution" value="${esc(data.school)}">
+    <input type="text" name="education_year[]" placeholder="Year (e.g. 2022 - 2026)" value="${esc(data.year)}">
+    <input type="text" name="education_details[]" placeholder="GPA / Honors (optional)" value="${esc(data.details)}">
+  </div><button type="button" class="btn-remove" onclick="removeGroup(this)">Remove</button>`;
+  document.getElementById('education-list').appendChild(div); updateMetrics();
 }
-
-function addExperience() {
+function addExperience(data = {}) {
   expCount++;
-  const div = document.createElement('div');
-  div.className = 'repeat-group';
-  div.innerHTML = `
-    <div class="grid-2">
-      <input type="text" name="experience_role[]" placeholder="Job Title / Internship Role">
-      <input type="text" name="experience_company[]" placeholder="Company">
-      <input type="text" name="experience_duration[]" placeholder="Duration (e.g. Jun 2025 - Aug 2025)">
-    </div>
-    <textarea name="experience_details[]" rows="2" placeholder="Key responsibilities / achievements"></textarea>
-    <button type="button" class="btn-remove" onclick="this.parentElement.remove()">Remove</button>`;
-  document.getElementById('experience-list').appendChild(div);
+  const div = document.createElement('div'); div.className = 'repeat-group'; div.dataset.kind = 'experience';
+  div.innerHTML = `<div class="repeat-number">Experience ${expCount}</div><div class="grid-2">
+    <input type="text" name="experience_role[]" placeholder="Job Title / Internship Role" value="${esc(data.role)}">
+    <input type="text" name="experience_company[]" placeholder="Company" value="${esc(data.company)}">
+    <input type="text" name="experience_duration[]" placeholder="Duration" value="${esc(data.duration)}">
+  </div><textarea name="experience_details[]" rows="2" placeholder="Key responsibilities / achievements">${esc(data.details)}</textarea><button type="button" class="btn-remove" onclick="removeGroup(this)">Remove</button>`;
+  document.getElementById('experience-list').appendChild(div); updateMetrics();
 }
-
-function addProject() {
+function addProject(data = {}) {
   projCount++;
-  const div = document.createElement('div');
-  div.className = 'repeat-group';
-  div.innerHTML = `
-    <div class="grid-2">
-      <input type="text" name="projects_title[]" placeholder="Project Title">
-      <input type="text" name="projects_link[]" placeholder="Link (optional)">
-    </div>
-    <textarea name="projects_description[]" rows="2" placeholder="Short description of the project"></textarea>
-    <button type="button" class="btn-remove" onclick="this.parentElement.remove()">Remove</button>`;
-  document.getElementById('projects-list').appendChild(div);
+  const div = document.createElement('div'); div.className = 'repeat-group'; div.dataset.kind = 'projects';
+  div.innerHTML = `<div class="repeat-number">Project ${projCount}</div><div class="grid-2">
+    <input type="text" name="projects_title[]" placeholder="Project Title" value="${esc(data.title)}">
+    <input type="text" name="projects_link[]" placeholder="Link (optional)" value="${esc(data.link)}">
+  </div><textarea name="projects_description[]" rows="2" placeholder="Short description of the project">${esc(data.description)}</textarea><button type="button" class="btn-remove" onclick="removeGroup(this)">Remove</button>`;
+  document.getElementById('projects-list').appendChild(div); updateMetrics();
+}
+function removeGroup(button) { button.parentElement.remove(); updateMetrics(); }
+function esc(v) { return String(v || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function value(name) { const el = document.querySelector(`[name="${name}"]`); return el ? el.value.trim() : ''; }
+function groupHasValue(group) { return [...group.querySelectorAll('input, textarea')].some(x => x.value.trim()); }
+function updateMetrics() {
+  const fields = ['full_name','email','phone','address','linkedin','github','portfolio','summary'];
+  const filled = fields.filter(n => value(n)).length;
+  const groups = ['education','experience','projects'].map(k => [...document.querySelectorAll(`[data-kind="${k}"]`)].filter(groupHasValue).length);
+  const skills = value('skills');
+  const certs = value('certifications');
+  const sections = [filled >= 2, groups[0] > 0, groups[1] > 0, groups[2] > 0, skills.length > 0, certs.length > 0].filter(Boolean).length;
+  const completion = Math.min(100, Math.round((filled / 8) * 65 + (sections / 6) * 35));
+  document.getElementById('fields-filled').textContent = `${filled}/8`;
+  document.getElementById('sections-count').textContent = `${sections}/6`;
+  document.getElementById('project-count').textContent = groups[2];
+  document.getElementById('read-time').textContent = Math.max(1, Math.ceil((document.getElementById('resume-form').innerText.length) / 1100)) + ' min';
+  document.getElementById('completion-value').textContent = completion + '%';
+  document.getElementById('completion-ring').style.setProperty('--progress', completion * 3.6 + 'deg');
+  document.getElementById('completion-text').textContent = completion >= 85 ? 'Great! Your resume is nearly ready.' : completion >= 60 ? 'Good progress — add a few more details.' : 'Let’s build your resume';
+  document.getElementById('personal-status').textContent = `${filled}/8 complete`;
+  document.getElementById('education-status').textContent = `${groups[0]} entries`;
+  document.getElementById('experience-status').textContent = `${groups[1]} entries`;
+  document.getElementById('projects-status').textContent = `${groups[2]} entries`;
+  document.getElementById('insight-completion').textContent = completion + '%';
+  document.getElementById('insight-bar').style.width = completion + '%';
+  document.getElementById('insight-sections').textContent = `${sections} / 6`;
+  document.getElementById('section-bar').style.width = Math.round(sections/6*100) + '%';
+  const skillCount = skills.split(',').map(x => x.trim()).filter(Boolean).length;
+  const skillPct = Math.min(100, skillCount * 12);
+  document.getElementById('skill-percent').textContent = skillPct + '%';
+  document.getElementById('skill-meter-fill').style.width = skillPct + '%';
+  document.getElementById('donut-value').textContent = completion + '%';
+  document.getElementById('content-donut').style.setProperty('--progress', completion * 3.6 + 'deg');
+  document.getElementById('strength-text').textContent = completion >= 85 ? 'Strong content coverage.' : completion >= 60 ? 'Good foundation. Add measurable achievements.' : 'Add education, projects and skills to improve coverage.';
 }
 
-// Start with one blank row of each
-addEducation();
-addExperience();
-addProject();
-</script>
+['input','textarea'].forEach(tag => document.querySelectorAll(tag).forEach(el => el.addEventListener('input', updateMetrics)));
+document.getElementById('resume_pdf').addEventListener('change', function() { document.getElementById('file-name').textContent = this.files[0] ? this.files[0].name : 'Choose PDF'; });
 
+if (imported) {
+  const simple = ['full_name','email','phone','address','linkedin','github','portfolio','summary'];
+  simple.forEach(k => { const el = document.querySelector(`[name="${k}"]`); if (el) el.value = imported[k] || ''; });
+  document.getElementById('education-list').innerHTML = '';
+  document.getElementById('experience-list').innerHTML = '';
+  document.getElementById('projects-list').innerHTML = '';
+  eduCount = expCount = projCount = 0;
+  (imported.education || []).forEach(addEducation);
+  (imported.experience || []).forEach(addExperience);
+  (imported.projects || []).forEach(addProject);
+  document.querySelector('[name="skills"]').value = (imported.skills || []).join(', ');
+  document.querySelector('[name="certifications"]').value = (imported.certifications || []).join('\n');
+} else {
+  addEducation(); addExperience(); addProject();
+}
+updateMetrics();
+</script>
 </body>
 </html>
